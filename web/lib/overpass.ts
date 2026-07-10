@@ -97,7 +97,10 @@ export async function postOverpass(query: string, retries = 3): Promise<Overpass
     try {
       const response = await fetch(baseURL, {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": "MyGolfGPS/0.1 (https://mygolfgps.vercel.app; contact@digitreegit.com)",
+        },
         body,
         signal: AbortSignal.timeout(30_000),
       });
