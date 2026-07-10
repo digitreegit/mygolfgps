@@ -20,16 +20,23 @@ public struct CourseAPIClient: Sendable {
     public let baseURL: URL
     private let session: URLSession
 
-    public init(baseURL: URL, session: URLSession = .shared) {
+    public init(baseURL: URL, session: URLSession? = nil) {
         self.baseURL = baseURL
-        self.session = session
+        if let session {
+            self.session = session
+        } else {
+            let config = URLSessionConfiguration.default
+            config.timeoutIntervalForRequest = 90
+            config.timeoutIntervalForResource = 120
+            self.session = URLSession(configuration: config)
+        }
     }
 
     public func searchCourses(
         query: String?,
         lat: Double,
         lon: Double,
-        radiusKm: Int = 50
+        radiusKm: Int = 15
     ) async throws -> [CourseSearchResult] {
         var components = URLComponents(
             url: baseURL.appendingPathComponent("api/courses/search"),

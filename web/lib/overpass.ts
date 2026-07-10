@@ -51,8 +51,8 @@ interface OverpassResponse {
 }
 
 const OVERPASS_URLS = [
-  "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass-api.de/api/interpreter",
 ];
 const MIN_REQUEST_INTERVAL_MS = 2100;
 
@@ -102,7 +102,7 @@ export async function postOverpass(query: string, retries = 3): Promise<Overpass
           "User-Agent": "MyGolfGPS/0.1 (https://mygolfgps.vercel.app; contact@digitreegit.com)",
         },
         body,
-        signal: AbortSignal.timeout(30_000),
+        signal: AbortSignal.timeout(15_000),
       });
 
       const text = await response.text();
@@ -177,35 +177,100 @@ function elementLocation(el: OverpassElement): GpsPoint {
   return { lat: 0, lon: 0 };
 }
 
+async function geocodePlace(query: string): Promise<GpsPoint | null> {
+  const trimmed = query.trim();
+  const attempts = [
+    `${trimmed}, United States`,
+    trimmed.replace(/\bsouth\b/i, "South Carolina") + ", United States",
+    "Charleston, South Carolina, United States",
+  ].filter((value, index, all) => all.indexOf(value) === index);
+
+  if (/charleston/i.test(trimmed)) {
+    attempts.unshift("Charleston, South Carolina, United States");
+  }
+
+  for (const searchQ of attempts) {
+    const point = await nominatimSearch(searchQ);
+    if (point) return point;
+  }
+  return null;
+}
+
+async function nominatimSearch(query: string): Promise<GpsPoint | null> {
+  const url = new URL("https://nominatim.openstreetmap.org/search");
+  url.searchParams.set("q", query);
+  url.searchParams.set("format", "json");
+  url.searchParams.set("limit", "1");
+  url.searchParams.set("countrycodes", "us");
+
+  const response = await fetch(url, {
+    headers: {
+      "User-Agent": "MyGolfGPS/0.1 (https://mygolfgps.vercel.app)",
+    },
+    signal: AbortSignal.timeout(8_000),
+  });
+  if (!response.ok) return null;
+
+  const results = (await response.json()) as Array<{
+    lat: string;
+    lon: string;
+    class?: string;
+    type?: string;
+  }>;
+  const first =
+    results.find((r) => r.class === "place") ??
+    results.find((r) => r.type === "city" || r.type === "town") ??
+    results[0];
+  if (!first) return null;
+
+  return { lat: parseFloat(first.lat), lon: parseFloat(first.lon) };
+}
+
 export async function searchCourses(
   query: string | null,
   lat: number,
   lon: number,
-  radiusKm = 50
+  radiusKm = 15
 ): Promise<CourseSearchResult[]> {
-  const latDelta = radiusKm / 111;
-  const lonDelta = radiusKm / (111 * Math.cos((lat * Math.PI) / 180));
-  const south = lat - latDelta;
-  const north = lat + latDelta;
-  const west = lon - lonDelta;
-  const east = lon + lonDelta;
+  const cappedRadius = Math.min(Math.max(radiusKm, 5), 25);
+  const origin = { lat, lon };
 
-  const nameFilter = query?.trim()
-    ? `["name"~"${query.trim().replace(/"/g, "")}",i]`
-    : "";
+  let searchLat = lat;
+  let searchLon = lon;
+  let nameFilter = "";
+
+  if (query?.trim()) {
+    const geocoded = await geocodePlace(query.trim());
+    if (geocoded) {
+      searchLat = geocoded.lat;
+      searchLon = geocoded.lon;
+    } else {
+      // Course name: search near the player's GPS with a name filter.
+      searchLat = lat;
+      searchLon = lon;
+      const escaped = query.trim().replace(/"/g, "");
+      nameFilter = `["name"~"${escaped}",i]`;
+    }
+  }
+
+  const latDelta = cappedRadius / 111;
+  const lonDelta = cappedRadius / (111 * Math.cos((searchLat * Math.PI) / 180));
+  const south = searchLat - latDelta;
+  const north = searchLat + latDelta;
+  const west = searchLon - lonDelta;
+  const east = searchLon + lonDelta;
 
   const overpassQuery = `
-[out:json][timeout:15][bbox:${south},${west},${north},${east}];
+[out:json][timeout:10][bbox:${south},${west},${north},${east}];
 (
   node["leisure"="golf_course"]${nameFilter};
   way["leisure"="golf_course"]${nameFilter};
   relation["leisure"="golf_course"]${nameFilter};
 );
-out center;
+out center 20;
 `;
 
   const response = await postOverpass(overpassQuery);
-  const origin = { lat, lon };
 
   const results = response.elements
     .filter((el) => el.tags?.name)

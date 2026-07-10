@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const q = searchParams.get("q");
   const lat = parseFloat(searchParams.get("lat") ?? "");
   const lon = parseFloat(searchParams.get("lon") ?? "");
-  const radiusKm = parseInt(searchParams.get("radiusKm") ?? "50", 10);
+  const radiusKm = Math.min(parseInt(searchParams.get("radiusKm") ?? "15", 10), 25);
 
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
     return NextResponse.json(
