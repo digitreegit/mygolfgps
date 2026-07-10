@@ -1,0 +1,79 @@
+.main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+}
+
+.hero {
+  margin-bottom: 3rem;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6ee07a;
+  border: 1px solid #2d5a2d;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  font-size: 2.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.75rem;
+}
+
+.subtitle {
+  font-size: 1.15rem;
+  color: #a8c4a8;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.features {
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.features li::before {
+  content: "⛳ ";
+}
+
+.status {
+  color: #7a9a7a;
+  font-size: 0.9rem;
+}
+
+.api {
+  margin-top: 2rem;
+}
+
+.apiTitle {
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6ee07a;
+  margin-bottom: 0.75rem;
+}
+
+.codeBlock {
+  background: #122412;
+  border: 1px solid #2d5a2d;
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.note {
+  font-size: 0.8rem;
+  color: #7a9a7a;
+}
