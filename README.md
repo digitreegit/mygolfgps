@@ -40,9 +40,12 @@ See [apple/README.md](apple/README.md) for Xcode setup.
 
 ### Deploy to Vercel
 
-Root `vercel.json` points to `web/`. Connect repo at [vercel.com/digitreegits-projects/mygolfgps](https://vercel.com/digitreegits-projects/mygolfgps).
+1. Vercel project: [vercel.com/digitreegits-projects/mygolfgps](https://vercel.com/digitreegits-projects/mygolfgps)
+2. **Settings → General → Root Directory → `web`** (필수)
+3. Framework Preset: **Next.js** (자동 감지)
+4. Git push 후 자동 배포, 또는 Deployments → Redeploy
 
-Set **Root Directory** to `web` in Vercel project settings (or use root vercel.json).
+> Root Directory가 `.`(루트)이면 빌드 실패 → `404 NOT_FOUND` 발생
 
 ## Architecture
 
